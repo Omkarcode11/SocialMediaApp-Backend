@@ -96,7 +96,7 @@ const userAllDetail = async (req, res) => {
 
 const allUsers = async (req, res) => {
   try {
-    let users = await db.user.find({},'name userName');
+    let users = await db.user.find({}, "name userName");
     res.status(200).json(users);
     res.end();
   } catch (err) {
@@ -119,22 +119,40 @@ const userAllFriend = async (req, res) => {
   }
 };
 const AcceptRequest = async (req, res) => {
-  let { myId, friendId } = req.body;
+  let { userId, friendId } = req.body;
   try {
-    await db.user.findByIdAndUpdate(myId, {
-      $pull: { friendReq: friendId },
-    });
-    await db.user.findByIdAndUpdate(friendId, {
-      $pull: { sendFriendReq: myId },
-    });
-    await db.user.findByIdAndUpdate(myId, {
-      $push: { myFriends: friendId },
-    });
-    await db.user.findByIdAndUpdate(friendId, {
-      $push: { myFriends: myId },
-    });
-    res.status(200).json({ msg: "Friend Request Accepted" });
-    res.end();
+    let user = await db.user.findById(
+      userId,
+      "friendReq myFriends sendFriendReq"
+    );
+    if (user.friendReq.includes(friendId)) {
+      await db.user.findByIdAndUpdate(userId, {
+        $pull: { friendReq: friendId },
+      });
+      await db.user.findByIdAndUpdate(friendId, {
+        $pull: { sendFriendReq: userId },
+      });
+      await db.user.findByIdAndUpdate(userId, {
+        $push: { myFriends: friendId },
+      });
+      await db.user.findByIdAndUpdate(friendId, {
+        $push: { myFriends: userId },
+      });
+      res.status(200).json({ msg: "Friend Request Accepted" });
+      res.end();
+    } else if (user.myFriends.includes(friendId)) {
+      res.status(401).send("Already Friend");
+      res.end();
+    } else if (user.sendFriendReq.includes(friendId)) {
+      res
+        .status(400)
+        .send("Your not able accept req because you send request this friend");
+      res.end();
+    } else {
+      res.status(404).send("You and Not request from this friend ");
+      res.end();
+      return;
+    }
   } catch (err) {
     res.status(400).json(err);
     res.end();
@@ -143,13 +161,37 @@ const AcceptRequest = async (req, res) => {
 
 const sendFriendRequests = async (req, res) => {
   try {
-    let { myId, friendId } = req.body;
-    await db.user.findByIdAndUpdate(myId, {
-      $push: { sendFriendReq: friendId },
-    });
-    await db.user.findByIdAndUpdate(friendId, { $push: { friendReq: myId } });
-    res.status(200).json({ msg: "Request Send Successfully" });
-    res.end();
+    let { userId, friendId } = req.body;
+    if (userId === friendId) {
+      res.status(404).send("You not Sent You Friend Request");
+      res.end();
+      return;
+    }
+
+    let isMyFriend = await db.user.findById(
+      userId,
+      "myFriends friendReq sendFriendReq"
+    );
+
+    if (isMyFriend.myFriends.includes(friendId)) {
+      res.status(404).send("You are Already Friend");
+      res.end();
+    } else if (isMyFriend.sendFriendReq.includes(friendId)) {
+      res.status(404).send("You Already send Friend Request");
+      res.end();
+    } else if (isMyFriend.friendReq.includes(friendId)) {
+      res.status(404).send("You Have Already Friend Request From This Friend");
+      res.end();
+    } else {
+      await db.user.findByIdAndUpdate(userId, {
+        $push: { sendFriendReq: friendId },
+      });
+      await db.user.findByIdAndUpdate(friendId, {
+        $push: { friendReq: userId },
+      });
+      res.status(200).json({ msg: "Request Send Successfully" });
+      res.end();
+    }
   } catch (err) {
     res.status(400).json(err);
     res.end();
@@ -170,7 +212,22 @@ const getAllFriendRequests = async (req, res) => {
   }
 };
 
+const findAllUserByIds = async (req,res)=>{
+  try{
+    let array = req.body.ids
+    let allUser =await db.user.find({_id:{$in :array}},'name userName')
+    res.status(200).json(allUser)
+    res.end()
+  }catch(err){
+    res.status(404).json(err)
+    res.end()
+  }
+
+
+}
+
 module.exports = {
+  findAllUserByIds,
   findById,
   findByName,
   deleteByName,

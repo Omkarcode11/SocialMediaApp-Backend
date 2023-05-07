@@ -20,7 +20,7 @@ const createPost = async (req, res) => {
       { _id: postInfo.userId },
       { $push: { myPosts: createdPost.id } }
     );
-    res.status(200).json(createdPost);
+    res.status(200).json({ msg: "Post created Successfully" });
     res.end();
   } catch (err) {
     res.status(202).json(err);
@@ -54,10 +54,16 @@ const getRelatedPosts = async (req, res) => {
 const like = async (req, res) => {
   try {
     let { userId, postId } = req.body;
-    let post = await db.posts.findByIdAndUpdate(postId, {
-      $push: { like: userId },
-    });
-    let user = await db.user.findByIdAndUpdate(userId, {
+    let post = await db.posts.findById(postId);
+
+    if (post.like.includes(userId)) {
+      res.status(400).send("your Already like this post");
+      res.end();
+      return;
+    }
+    post.like.push(userId);
+    await post.save();
+    await db.user.findByIdAndUpdate(userId, {
       $push: { likedPosts: postId },
     });
     res.status(200).json(post.like.length);
@@ -70,15 +76,23 @@ const like = async (req, res) => {
 const dislike = async (req, res) => {
   try {
     let { userId, postId } = req.body;
-    let post = await db.posts.findByIdAndUpdate(postId, {
-      $pull: { like: userId },
-    });
-    let user = await db.user.findByIdAndUpdate(userId, {
-      $pull: { likedPosts: postId },
-    });
-
-    res.status(200).send(post.like.length);
-    res.end();
+    // let post = await db.posts.findByIdAndUpdate(postId, {
+    //   $pull: { like: userId },
+    // });
+    let post = await db.posts.findById(postId);
+    let index = post.like.findIndex((index) => index == userId);
+    if (index!=-1) {
+      post.like.splice(index, 1);
+      await post.save();
+      await db.user.findByIdAndUpdate(userId, {
+        $pull: { likedPosts: postId },
+      });
+      res.status(201).send('post disLikeSuccessfully');
+      res.end();
+    } else {
+      res.status(400).send("you not like this post");
+      res.end();
+    }
   } catch (err) {
     res.status(404).json(err);
     res.end();
@@ -91,7 +105,19 @@ const comment = async (req, res) => {
     let comm = await db.posts.findByIdAndUpdate(postId, {
       $push: { comments: comment },
     });
-    res.status(200).json({ 'msg': "Success" });
+    res.status(200).json({ msg: "Success" });
+    res.end();
+  } catch (err) {
+    res.status(404).json(err);
+    res.end();
+  }
+};
+
+const getPostByUserId = async (req, res) => {
+  try {
+    let id = req.params.id;
+    let posts = await db.posts.find({ userId: id });
+    res.status(200).json(posts);
     res.end();
   } catch (err) {
     res.status(404).json(err);
@@ -100,6 +126,7 @@ const comment = async (req, res) => {
 };
 
 module.exports = {
+  getPostByUserId,
   getPostById,
   createPost,
   allPosts,

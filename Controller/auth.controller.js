@@ -16,6 +16,7 @@ const signin = async (req, res) => {
 
       if (isValidPassword) {
         const secKey = process.env.SECRET_KEY;
+        input.id = user.id;
         let token = jwt.sign(input, secKey, { expiresIn: "1h" });
 
         res.status(200).send(token);
@@ -32,12 +33,17 @@ const signin = async (req, res) => {
 
 const signup = async (req, res) => {
   try {
+    let isExist = await db.user.findOne({ userName: req.body.userName });
+    if (isExist) {
+      res.status(404).send("Change User name");
+      res.end();
+      return;
+    }
     let userInfo = req.body;
     let hash = await bcrypt.hash(userInfo.password, 10);
     userInfo.password = hash;
     let user = await db.user.create(userInfo);
-    // await user.save()
-    res.status(200).json({ user: user, msg: "user Created Successfully" });
+    res.status(201).json({ msg: "Account Created Successfully" });
     res.end();
   } catch (err) {
     res.status(400).json({ err: err, msg: "Err" });
