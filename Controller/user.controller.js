@@ -212,19 +212,20 @@ const getAllFriendRequests = async (req, res) => {
   }
 };
 
-const findAllUserByIds = async (req,res)=>{
-  try{
-    let array = req.body.ids
-    let allUser =await db.user.find({_id:{$in :array}},'name userName')
-    res.status(200).json(allUser)
-    res.end()
-  }catch(err){
-    res.status(404).json(err)
-    res.end()
+const findAllUserByIds = async (req, res) => {
+  try {
+    let array = req.body.ids;
+    let allUser = await db.user.find({ _id: { $in: array } }, "name userName");
+    res.status(200).json(allUser);
+    res.end();
+  } catch (err) {
+    res.status(404).json(err);
+    res.end();
   }
+};
 
 
-}
+
 
 module.exports = {
   findAllUserByIds,

@@ -76,18 +76,15 @@ const like = async (req, res) => {
 const dislike = async (req, res) => {
   try {
     let { userId, postId } = req.body;
-    // let post = await db.posts.findByIdAndUpdate(postId, {
-    //   $pull: { like: userId },
-    // });
     let post = await db.posts.findById(postId);
     let index = post.like.findIndex((index) => index == userId);
-    if (index!=-1) {
+    if (index != -1) {
       post.like.splice(index, 1);
       await post.save();
       await db.user.findByIdAndUpdate(userId, {
         $pull: { likedPosts: postId },
       });
-      res.status(201).send('post disLikeSuccessfully');
+      res.status(201).send("post disLikeSuccessfully");
       res.end();
     } else {
       res.status(400).send("you not like this post");
@@ -102,7 +99,11 @@ const dislike = async (req, res) => {
 const comment = async (req, res) => {
   try {
     let { postId, comment } = req.body;
-    let comm = await db.posts.findByIdAndUpdate(postId, {
+    if (comment.body.length == 0 || comment.name.length == 0) {
+      res.status(404).send("comment is in valid");
+      res.end();
+    }
+    await db.posts.findByIdAndUpdate(postId, {
       $push: { comments: comment },
     });
     res.status(200).json({ msg: "Success" });
