@@ -6,7 +6,7 @@ const validator = require("./../middleware/validation");
 authRouter.post("/signup", [validator.signupValidation], authController.signup);
 authRouter.post(
   "/signin",
-  [validator.passwordValidation],
+  [validator.passwordValidation,validator.identifyInput],
   authController.signin
 );
 

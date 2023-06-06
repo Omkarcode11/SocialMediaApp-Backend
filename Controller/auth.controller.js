@@ -6,7 +6,12 @@ require("dotenv").config();
 const signin = async (req, res) => {
   try {
     let input = req.body;
-    let user = await db.user.findOne({ name: input.name });
+    let user;
+
+    if (input.type == "email")
+      user = await db.user.findOne({ email: input.detail });
+    else if (input.type == "phone")
+      user = await db.user.findOne({ phone: input.detail });
 
     if (user == null) {
       res.status(201).send("User not Found");
@@ -14,15 +19,12 @@ const signin = async (req, res) => {
     } else if (user != null) {
       let isValidPassword = await bcrypt.compare(input.password, user.password);
 
+    
       if (isValidPassword) {
         const secKey = process.env.SECRET_KEY;
-        input.id = user.id;
         let token = jwt.sign(input, secKey, { expiresIn: "1h" });
-
-        res.status(200).send(token);
-      } else res.status(401).send("Password is not Wrong");
-
-      res.end();
+        return res.status(200).json({ user, token });
+      } else return res.status(200).send("Password is not Wrong");
     }
   } catch (err) {
     console.log(err);
@@ -33,21 +35,13 @@ const signin = async (req, res) => {
 
 const signup = async (req, res) => {
   try {
-    let isExist = await db.user.findOne({ userName: req.body.userName });
-    if (isExist) {
-      res.status(404).send("Change User name");
-      res.end();
-      return;
-    }
     let userInfo = req.body;
     let hash = await bcrypt.hash(userInfo.password, 10);
     userInfo.password = hash;
-    let user = await db.user.create(userInfo);
-    res.status(201).json({ msg: "Account Created Successfully" });
-    res.end();
+    await db.user.create(userInfo);
+    return res.status(201).send("Account Created Successfully");
   } catch (err) {
-    res.status(400).json({ err: err, msg: "Err" });
-    res.end();
+    return res.status(500).send('internal Error');
   }
 };
 

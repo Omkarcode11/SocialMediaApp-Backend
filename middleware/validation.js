@@ -1,4 +1,4 @@
-let emailValidator = require("email-validator");
+let db = require('./../Model/index')
 let passWordValidator = require("password-validator");
 const mongoose = require("mongoose");
 
@@ -21,23 +21,38 @@ schema
   .has()
   .symbols();
 
-const signupValidation = (req, res, next) => {
-  req.body.name = req.body.name.trim();
-  req.body.userName = req.body.userName.trim();
-  if (req.body.name.length <= 1)
-    return res.status(401).send("name is not Valid");
-  else if (req.body.userName.length <= 1)
-    return res.status(401).send("userName is not Valid");
-  else if (req.body.phone > 9999999999 || req.body.phone < 6666666666)
-    return res.status(401).send("phone is not Valid");
-  else if (!emailValidator.validate(req.body.email))
-    return res.status(401).send("Email is not Valid");
-  else if (!schema.validate(req.body.password))
-    return res
-      .status(401)
-      .send(schema.validate(req.body.password, { details: true }));
-  else next();
-};
+const signupValidation = async (req, res, next) => {
+  try {
+
+    if (!req.body.firstName || req.body.firstName.length <= 1)
+      return res.status(200).send("firstName is not Valid");
+    else if (!req.body.lastName || req.body.lastName.length <= 1)
+      return res.status(200).send("lastName is not Valid");
+    else if (!req.body.phone || req.body.phone > 9999999999 || req.body.phone < 6666666666)
+      return res.status(200).send("phone Number is not Valid");
+    else if (!req.body.email || req.body.email.length<=5 || !req.body.email.includes('@') || !req.body.email.includes('.'))
+      return res.status(200).send("email is not Valid");
+
+
+    else if (!schema.validate(req.body.password))
+      return res
+        .status(201)
+        .send(schema.validate(req.body.password, { details: true })[0].message);
+
+
+    let isEmail = await db.user.findOne({ email: req.body.email })
+    if (isEmail) {
+      return res.status(200).send('Change Email Address')
+    }
+    let isPhone = await db.user.findOne({ phone: req.body.phone })
+    if (isPhone) {
+      return res.status(200).send('Change Phone Number')
+    }
+    next()
+  } catch (err) {
+    return res.status(200).send(err)
+  }
+}
 
 const postValidation = (req, res, next) => {
   if (req.body.userId.length <= 10) {
@@ -47,11 +62,12 @@ const postValidation = (req, res, next) => {
 };
 
 const passwordValidation = (req, res, next) => {
+  if (!req.body.detail || req.body.detail.length == 0) return res.status(200).send('Enter Detail')
   if (schema.validate(req.body.password)) {
     next();
   } else {
-    res.status(401).json(schema.validate(req.body.password, { details: true }));
-    res.end();
+   return  res.status(200).json('password incorrect');
+ 
   }
 };
 
@@ -99,7 +115,24 @@ const isValidIdsPost = (req, res, next) => {
   }
 };
 
+const identifyInput = (req, res, next) => {
+  if (req.body.detail) {
+    if (typeof req.body.detail=='string' && req.body.detail.includes("@") && req.body.detail.includes('.com')) {
+      req.body.type = 'email'
+      next()
+    } else if (!isNaN(Number(req.body.detail))) {
+      req.body.type = "phone"
+      next()
+    } 
+    return res.status(200).send("Enter Email or Phone")
+  } else {
+    return res.status(200).send("Enter Email or Phone")
+  }
+}
+
+
 module.exports = {
+  identifyInput,
   isValidIdsPost,
   isValidArrayIds,
   signupValidation,

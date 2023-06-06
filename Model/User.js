@@ -1,11 +1,20 @@
 const mongoose = require("mongoose");
 
 const userSchema = mongoose.Schema({
-  userName: String,
-  name: String,
-  email: String,
+  firstName: {
+    type: String,
+  },
+  lastName: String,
+  email: {
+    type: String,
+    unique: true,
+  },
   password: String,
-  phone: Number,
+  phone: {
+    type: Number,
+    unique: true,
+  },
+  avatar: String,
   myPosts: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,12 +40,10 @@ const userSchema = mongoose.Schema({
     },
   ],
   likedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Posts" }],
-  createdAt: [
-    {
-      type: Date,
-      default: Date.now,
-    },
-  ],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);
