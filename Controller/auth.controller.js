@@ -24,12 +24,12 @@ const signin = async (req, res) => {
         const secKey = process.env.SECRET_KEY;
         let token = jwt.sign(input, secKey, { expiresIn: "1h" });
         return res.status(200).json({ user, token });
-      } else return res.status(200).send("Password is not Wrong");
+      } else return res.status(200).send("Password is Wrong");
     }
   } catch (err) {
     console.log(err);
-    res.status(400).send(err);
-    res.end();
+    return res.status(400).send('internal error');
+  
   }
 };
 
