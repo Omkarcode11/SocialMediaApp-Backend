@@ -4,21 +4,19 @@ const verify = async (req, res, next) => {
   try {
     let token = req.headers.authorization;
     const secKey = process.env.SECRET_KEY;
-    if (!token) return res.status(401).send("Missing authorization header");
-    
+    if (!token) return res.status(201).send("Missing authorization header");
+
     token = token.split(" ")[1];
 
 
-    if (!token) return res.status(401).send("Missing token");
+    if (!token) return res.status(201).send("Missing token");
 
     let isValid = jwt.verify(token, secKey);
 
-    if (isValid.id==req.body.userId || req.params.id) next();
-
-    else return res.status(401).send("Invalid Token");
-    
+    if (isValid.id == req.body.userId || req.params.id) next();
+    else return res.status(200).send(isValid)
   } catch (err) {
-    res.status(400).json(err.message);
+    res.status(200).json(err.message);
     return;
   }
 };

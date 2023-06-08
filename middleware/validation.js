@@ -30,7 +30,7 @@ const signupValidation = async (req, res, next) => {
       return res.status(200).send("lastName is not Valid");
     else if (!req.body.phone || req.body.phone > 9999999999 || req.body.phone < 6666666666)
       return res.status(200).send("phone Number is not Valid");
-    else if (!req.body.email || req.body.email.length<=5 || !req.body.email.includes('@') || !req.body.email.includes('.'))
+    else if (!req.body.email || req.body.email.length <= 5 || !req.body.email.includes('@') || !req.body.email.includes('.'))
       return res.status(200).send("email is not Valid");
 
 
@@ -55,10 +55,11 @@ const signupValidation = async (req, res, next) => {
 }
 
 const postValidation = (req, res, next) => {
-  if (req.body.userId.length <= 10) {
-    res.status(401).send("userId is Not Valid");
-    res.end();
-  } else next();
+  if (req.body.userId.length <= 10)
+    return res.status(201).send("userId is Not Valid");
+  else if (!req.body.photo && !req.body.caption)
+    return res.status(200).send("Enter caption or upload photo")
+  else next();
 };
 
 const passwordValidation = (req, res, next) => {
@@ -66,8 +67,8 @@ const passwordValidation = (req, res, next) => {
   if (schema.validate(req.body.password)) {
     next();
   } else {
-   return  res.status(200).json('password incorrect');
- 
+    return res.status(200).send('password incorrect');
+
   }
 };
 
@@ -117,14 +118,15 @@ const isValidIdsPost = (req, res, next) => {
 
 const identifyInput = (req, res, next) => {
   if (req.body.detail) {
-    if (typeof req.body.detail=='string' && req.body.detail.includes("@") && req.body.detail.includes('.com')) {
+    if (typeof req.body.detail == 'string' && req.body.detail.includes("@") && req.body.detail.includes('.com')) {
       req.body.type = 'email'
       next()
     } else if (!isNaN(Number(req.body.detail))) {
       req.body.type = "phone"
       next()
-    } 
-    return res.status(200).send("Enter Email or Phone")
+    } else {
+      res.status(200).send("Enter invalid Email or phone")
+    }
   } else {
     return res.status(200).send("Enter Email or Phone")
   }
