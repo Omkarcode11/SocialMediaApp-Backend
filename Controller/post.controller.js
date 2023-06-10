@@ -1,3 +1,4 @@
+const uploadFilesMiddleware = require("../middleware/fileUploads");
 const db = require("./../Model/index");
 
 const getPostById = async (req, res) => {
@@ -14,14 +15,27 @@ const getPostById = async (req, res) => {
 
 const createPost = async (req, res) => {
   try {
-    let postInfo = req.body;
-    let createdPost = await db.posts.create(postInfo);
-    await db.user.findOneAndUpdate(
-      { _id: postInfo.userId },
-      { $push: { myPosts: createdPost.id } }
-    );
-    res.status(200).json({ msg: "Post created Successfully" });
-    res.end();
+
+    await uploadFilesMiddleware(req, res)
+    let info = req.query
+    info.photo = req.file.filename
+    info.userId = req.userId
+    // let postInfo = {
+    //   caption: req.caption ? req.caption : "",
+    //   userId: req.userId,
+    //   comments: [],
+    //   like: [],
+    //   photo: req.file.filename
+    // };
+
+    let createdPost = await db.posts.create(info);
+    let user = await db.user.findById(req.params.id);
+
+    user.myPosts.push(createdPost.id)
+    await user.save()
+
+    return res.status(200).json({ msg: "Post created Successfully" });
+
   } catch (err) {
     res.status(200).json(err);
     res.end();
@@ -29,21 +43,28 @@ const createPost = async (req, res) => {
 };
 
 const allPosts = async (req, res) => {
-  let posts = await db.posts.find({});
-  res.status(200).json(posts);
+
+  let page = req.query.page
+  let skip = (page - 1) * 5
+
+  let posts = await db.posts.find({}).skip(skip).limit(5);
+  posts.sort(() => Math.random() - 0.5)
+  res.status(200).send(posts);
   res.end();
 };
 
 const getRelatedPosts = async (req, res) => {
   let relatedPosts = [];
   try {
+    let page = req.query.page
+    let skip = (page - 1) * 5
     let id = req.params.id;
     let friendsPosts = await db.user
-      .findById(id, "myFriends")
+      .findById(id, "myFriends myPosts").populate('myPosts')
       .populate("myFriends", "myPosts");
     friendsPosts.myFriends.map((e) => relatedPosts.push(...e.myPosts));
-    let allPostsRel = await db.posts.find({ _id: { $in: relatedPosts } });
-    res.status(200).json(allPostsRel);
+    let allPostsRel = await db.posts.find({ _id: { $in: relatedPosts } }).skip(skip).limit(5);
+    res.status(200).json(allPostsRel.sort(() => Math.random() - 0.5));
     res.end();
   } catch (err) {
     res.status(200).json(err);

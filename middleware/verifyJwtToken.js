@@ -13,7 +13,10 @@ const verify = async (req, res, next) => {
 
     let isValid = jwt.verify(token, secKey);
 
-    if (isValid.id == req.body.userId || req.params.id) next();
+    if (isValid.id == req.body.userId || req.params.id) {
+       req.userId = isValid.id
+      next();
+    }
     else return res.status(200).send(isValid)
   } catch (err) {
     res.status(200).json(err.message);

@@ -201,10 +201,10 @@ const sendFriendRequests = async (req, res) => {
 const getAllFriendRequests = async (req, res) => {
   try {
     let id = req.params.id;
-    let pendingRequests = await db.user
+    let friendRequests = await db.user
       .findById(id, "friendReq")
-      .populate("friendReq", "name");
-    res.status(200).json(pendingRequests);
+   let friendsReq = await db.user.find({_id : { $in : friendRequests.friendReq}},'firstName lastName _id')
+    res.status(200).json(friendsReq);
     res.end();
   } catch (err) {
     res.status(404).json(err);
@@ -224,10 +224,48 @@ const findAllUserByIds = async (req, res) => {
   }
 };
 
+const findUsersWhichNotFriend = async (req, res) => {
+  try {
+    let randomNumber = 0
+    let count = await db.user.count()
+    if (count > 20) {
+      randomNumber = Math.floor(Math.random() * count) - 15
+    }
+
+
+    let User = await db.user.findById(req.userId)
+    User.myFriends.push(req.params.id)
+    let allUser = await db.user.find({ _id: { $nin: User.myFriends } }, 'firstName lastName _id').skip(randomNumber).limit(15)
+
+    res.status(200).send(allUser)
+
+  } catch {
+    res.status(500).send('Internal Error')
+
+  }
+
+}
+
+const getAllMySendedFriendRequests = async (req, res) => {
+  try {
+
+    let User = await db.user.findById(req.params.id, 'sendFriendReq')
+    let sendReq = await db.user.find({ _id: { $in: User.sendFriendReq } }, 'firstName lastName _id')
+
+    res.status(200).send(sendReq)
+  } catch (err) {
+
+    res.status(500).send(err)
+  }
+
+}
+
 
 
 
 module.exports = {
+  getAllMySendedFriendRequests,
+  findUsersWhichNotFriend,
   findAllUserByIds,
   findById,
   findByName,

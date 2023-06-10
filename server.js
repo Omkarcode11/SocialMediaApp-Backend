@@ -4,6 +4,7 @@ const db = require("./Model/index");
 const router = require("./Router/index");
 const cors = require('cors');
 const mongoose = require("mongoose");
+const multer = require('multer')
 require('dotenv').config()
 
 mongoose.connect(process.env.DB_URL)
@@ -16,6 +17,7 @@ conn.on('err', () => {
 conn.once("open", () => {
   console.log('db connected successfully')
 })
+
 
 app.use(cors())
 app.use(express.json());

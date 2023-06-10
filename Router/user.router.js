@@ -11,6 +11,8 @@ userRouter.get("/delete/id/:id", userController.deleteById);
 userRouter.get("/detail/:id", userController.userAllDetail);
 userRouter.get("/allUsers", userController.allUsers);
 userRouter.get("/myFriends/:id", [jwt.verify], userController.userAllFriend);
+userRouter.get("/notMyFriends/:id", [jwt.verify], userController.findUsersWhichNotFriend);
+userRouter.get("/sendedFriendRequests/:id", [jwt.verify], userController.getAllMySendedFriendRequests);
 userRouter.get(
   "/friendRequests/:id",
   [jwt.verify],

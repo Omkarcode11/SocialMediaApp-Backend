@@ -54,14 +54,6 @@ const signupValidation = async (req, res, next) => {
   }
 }
 
-const postValidation = (req, res, next) => {
-  if (req.body.userId.length <= 10)
-    return res.status(201).send("userId is Not Valid");
-  else if (!req.body.photo && !req.body.caption)
-    return res.status(200).send("Enter caption or upload photo")
-  else next();
-};
-
 const passwordValidation = (req, res, next) => {
   if (!req.body.detail || req.body.detail.length == 0) return res.status(200).send('Enter Detail')
   if (schema.validate(req.body.password)) {
@@ -138,7 +130,6 @@ module.exports = {
   isValidIdsPost,
   isValidArrayIds,
   signupValidation,
-  postValidation,
   passwordValidation,
   isValidIds,
 };
