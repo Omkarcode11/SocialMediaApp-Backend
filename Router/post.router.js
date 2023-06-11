@@ -19,9 +19,9 @@ postsRouter.get(
   [jwtMiddleWare.verify],
   postController.getRelatedPosts
 );
-postsRouter.put("/like", [validator.isValidIdsPost], postController.like);
-postsRouter.put("/dislike", [validator.isValidIdsPost], postController.dislike);
-postsRouter.put("/comment", [jwtMiddleWare.verify], postController.comment);
+postsRouter.put("/like", [validator.isValidIdsPost, jwtMiddleWare.verify], postController.like);
+postsRouter.put("/dislike", [validator.isValidIdsPost, jwtMiddleWare.verify], postController.dislike);
+postsRouter.put("/comment", [jwtMiddleWare.verify, jwtMiddleWare.verify], postController.comment);
 
 
 postsRouter.post('/upload', uploadFiles)

@@ -203,7 +203,7 @@ const getAllFriendRequests = async (req, res) => {
     let id = req.params.id;
     let friendRequests = await db.user
       .findById(id, "friendReq")
-   let friendsReq = await db.user.find({_id : { $in : friendRequests.friendReq}},'firstName lastName _id')
+    let friendsReq = await db.user.find({ _id: { $in: friendRequests.friendReq } }, 'firstName lastName _id')
     res.status(200).json(friendsReq);
     res.end();
   } catch (err) {
@@ -215,27 +215,21 @@ const getAllFriendRequests = async (req, res) => {
 const findAllUserByIds = async (req, res) => {
   try {
     let array = req.body.ids;
-    let allUser = await db.user.find({ _id: { $in: array } }, "name userName");
-    res.status(200).json(allUser);
-    res.end();
+    let allUser = await db.user.find({ _id: { $in: array } }, "firstName lastName _id");
+    return res.status(200).json(allUser);
+
   } catch (err) {
-    res.status(404).json(err);
-    res.end();
+    return res.status(404).json(err);
+
   }
 };
 
 const findUsersWhichNotFriend = async (req, res) => {
   try {
-    let randomNumber = 0
-    let count = await db.user.count()
-    if (count > 20) {
-      randomNumber = Math.floor(Math.random() * count) - 15
-    }
 
+    let relatedFriends = req.body.ids
 
-    let User = await db.user.findById(req.userId)
-    User.myFriends.push(req.params.id)
-    let allUser = await db.user.find({ _id: { $nin: User.myFriends } }, 'firstName lastName _id').skip(randomNumber).limit(15)
+    let allUser = await db.user.find({ _id: { $nin: relatedFriends } }, 'firstName lastName _id').limit(20)
 
     res.status(200).send(allUser)
 

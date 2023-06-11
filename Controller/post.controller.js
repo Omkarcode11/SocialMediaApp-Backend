@@ -77,18 +77,13 @@ const like = async (req, res) => {
     let { userId, postId } = req.body;
     let post = await db.posts.findById(postId);
 
-    if (post.like.includes(userId)) {
-      res.status(400).send("your Already like this post");
-      res.end();
-      return;
-    }
+    if (post.like.includes(userId)) return res.status(400).send("your Already like this post");
     post.like.push(userId);
     await post.save();
     await db.user.findByIdAndUpdate(userId, {
       $push: { likedPosts: postId },
     });
-    res.status(200).json(post.like.length);
-    res.end();
+    return res.status(200).json(post.like.length);
   } catch (err) {
     res.status(404).json(err);
     res.end();
@@ -98,19 +93,24 @@ const dislike = async (req, res) => {
   try {
     let { userId, postId } = req.body;
     let post = await db.posts.findById(postId);
+    let user = await db.user.findById(userId)
+
     let index = post.like.findIndex((index) => index == userId);
-    if (index != -1) {
+
+    let index2 = user.likedPosts.findIndex((index) => index == postId)
+
+    if (index != -1 && index2 != -1) {
       post.like.splice(index, 1);
       await post.save();
-      await db.user.findByIdAndUpdate(userId, {
-        $pull: { likedPosts: postId },
-      });
-      res.status(201).send("post disLikeSuccessfully");
-      res.end();
+
+      user.likedPosts.splice(index2, 1)
+      await user.save()
+
+      return res.status(200).json(post.like.length);
     } else {
-      res.status(400).send("you not like this post");
-      res.end();
+      return res.status(200).send("you not liked This post")
     }
+
   } catch (err) {
     res.status(404).json(err);
     res.end();
@@ -124,11 +124,16 @@ const comment = async (req, res) => {
       res.status(404).send("comment is in valid");
       res.end();
     }
-    await db.posts.findByIdAndUpdate(postId, {
-      $push: { comments: comment },
-    });
-    res.status(200).json({ msg: "Success" });
-    res.end();
+    let post = await db.posts.findById(postId);
+    if (post) {
+      post.comments.push(comment)
+      await post.save()
+
+      return res.status(200).json("post Successfully");
+    } else {
+      return res.status(201).send("post not found")
+    }
+
   } catch (err) {
     res.status(404).json(err);
     res.end();
