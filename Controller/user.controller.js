@@ -254,10 +254,38 @@ const getAllMySendedFriendRequests = async (req, res) => {
 
 }
 
+const removeFriend = async (req, res) => {
+  try {
 
+    let { userId, friendId } = req.body
+
+    let user = await db.user.findById(userId)
+    let friend = await db.user.findById(friendId)
+
+    if (user && friend) {
+      let index = user.myFriends.indexOf(friendId)
+      let index2 = friend.myFriends.indexOf(userId)
+
+      if (index != -1) {
+        user.myFriends.splice(index, 1)
+        await user.save()
+      }
+      if (index2 != -1) {
+        friend.myFriends.splice(index2, 1)
+        await friend.save()
+      }
+      return res.status(200).send('removeFriend Successfully')
+    } else {
+      return res.status(200).send("User not found")
+    }
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
 
 
 module.exports = {
+  removeFriend,
   getAllMySendedFriendRequests,
   findUsersWhichNotFriend,
   findAllUserByIds,

@@ -30,6 +30,11 @@ userRouter.put(
   [jwt.verify, validator.isValidIds],
   userController.AcceptRequest
 );
+userRouter.put(
+  "/removeFriend",
+  [jwt.verify, validator.isValidIds],
+  userController.removeFriend
+);
 
 userRouter.patch("/update/:id", [jwt.verify], userController.updateById);
 

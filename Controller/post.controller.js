@@ -152,6 +152,10 @@ const getPostByUserId = async (req, res) => {
   }
 };
 
+
+
+
+
 module.exports = {
   getPostByUserId,
   getPostById,
