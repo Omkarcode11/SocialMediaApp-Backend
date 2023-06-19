@@ -31,12 +31,18 @@ userRouter.put(
   userController.AcceptRequest
 );
 userRouter.put(
+  "/rejectRequest",
+  [jwt.verify, validator.isValidIds],
+  userController.rejectFriendRequest
+);
+userRouter.put(
   "/removeFriend",
   [jwt.verify, validator.isValidIds],
   userController.removeFriend
 );
 
 userRouter.patch("/update/:id", [jwt.verify], userController.updateById);
+userRouter.patch("/revokeRequest", [jwt.verify], userController.revokeFriendRequest);
 
 userRouter.patch(
   "/sendFriendRequest",

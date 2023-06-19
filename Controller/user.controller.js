@@ -283,8 +283,80 @@ const removeFriend = async (req, res) => {
   }
 }
 
+const revokeFriendRequest = async (req, res) => {
+  try {
+    let { userId, friendId } = req.body;
+    if (userId === friendId) {
+      res.status(404).send("You not Sent You Friend Request");
+      res.end();
+      return;
+    }
+
+    let isISendRequest = await db.user.findById(
+      userId,
+      "sendFriendReq"
+    );
+    let isFriendGotRequest = await db.user.findById(friendId, 'friendReq')
+
+    let index = isISendRequest.sendFriendReq.indexOf(friendId)
+    let index2 = isFriendGotRequest.friendReq.indexOf(userId)
+    if (index >= 0 && index2 >= 0) {
+      isISendRequest.sendFriendReq.splice(index, 1)
+      await isISendRequest.save()
+
+      isFriendGotRequest.friendReq.splice(index2, 1)
+      await isFriendGotRequest.save()
+
+      return res.status(200).send('Your request is revoked')
+    } else {
+      return res.status(400).send("you not send friend request")
+    }
+  } catch (err) {
+    res.status(400).json(err);
+    res.end();
+  }
+}
+
+const rejectFriendRequest = async (req, res) => {
+  try {
+    let { userId, friendId } = req.body;
+    if (userId === friendId) {
+      res.status(404).send("You not Sent You Friend Request");
+      res.end();
+      return;
+    }
+
+    let user = await db.user.findById(
+      userId,
+      "friendReq"
+    );
+    let friend = await db.user.findById(friendId, 'sendFriendReq')
+
+    let index2 = user.friendReq.indexOf(friendId)
+    let index = friend.sendFriendReq.indexOf(userId)
+    if (index >= 0 && index2 >= 0) {
+
+      user.friendReq.splice(index2, 1)
+      await user.save()
+
+      friend.sendFriendReq.splice(index, 1)
+      await friend.save()
+
+      return res.status(200).send('Your request is rejected successfully')
+    } else {
+      return res.status(400).send("you not send friend request")
+    }
+  } catch (err) {
+    res.status(400).json(err);
+    res.end();
+  }
+
+}
+
 
 module.exports = {
+  rejectFriendRequest,
+  revokeFriendRequest,
   removeFriend,
   getAllMySendedFriendRequests,
   findUsersWhichNotFriend,
